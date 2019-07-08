@@ -430,6 +430,7 @@ class TfPoseEstimator:
                     cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
 
         return npimg
+
     @staticmethod
     def draw_triangle(npimg, humans, imgcopy=False):
         if imgcopy:
@@ -492,6 +493,43 @@ class TfPoseEstimator:
                     trg_cnt = np.array([[p1, p2, p3]])
                     cv2.fillPoly(npimg, trg_cnt,(0,255,0))
         return npimg
+
+    @staticmethod
+    def get_golf_pose(npimg, humans, imgcopy=False):
+        pose = {'right':{}, 'left':{}}
+        if imgcopy:
+            npimg = np.copy(npimg)
+        image_h, image_w = npimg.shape[:2]
+        centers = {}
+        for human in humans:
+            # draw point
+            # for i in range(common.CocoPart.Background.value):
+            min_x = 1000000
+            min_y = 1000000
+            max_x = 0
+            max_y = 0
+
+            for i in human.body_parts :
+                body_part_x = human.body_parts[i].x * image_w + 0.5
+                body_part_y = human.body_parts[i].y * image_h + 0.5
+                if max_x < body_part_x : max_x = body_part_x
+                if max_y < body_part_y : max_y = body_part_y
+                if min_x > body_part_x : min_x = body_part_x
+                if min_y > body_part_y : min_y = body_part_y
+
+            image_size = image_w * image_h
+            human_size = (max_x - min_x) * (max_y - min_y)
+            ratio = human_size / image_size
+            if ratio > 0.07 :
+                directs = ['right', 'left']
+                positions = ['shoulder', 'elbow', 'wrist']
+                i = 2
+                for direct in directs :
+                    for position in positions :
+                        pose[direct][position] = (human.body_parts[i].x * image_w + 0.5, human.body_parts[i].y * image_h + 0.5)
+                        i += 1
+
+        return pose
 
     def _get_scaled_img(self, npimg, scale):
         get_base_scale = lambda s, w, h: max(self.target_size[0] / float(h), self.target_size[1] / float(w)) * s
