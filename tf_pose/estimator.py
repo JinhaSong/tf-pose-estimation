@@ -413,6 +413,36 @@ class TfPoseEstimator:
                 cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
 
         return npimg
+    @staticmethod
+    def draw_triangle(npimg, humans, imgcopy=False):
+        if imgcopy:
+            npimg = np.copy(npimg)
+        image_h, image_w = npimg.shape[:2]
+        centers = {}
+        for human in humans:
+            # draw point
+            # for i in range(common.CocoPart.Background.value):
+            edge = [2,4,5,7]
+            for i in edge:
+                if i not in human.body_parts.keys():
+                    continue
+
+                body_part = human.body_parts[i]
+                center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
+                centers[i] = center
+                cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
+
+
+            # draw line
+            pair_circle = [(2, 4), (2, 5), (5, 7)]
+            for pair_order, pair in enumerate(pair_circle):
+                if pair[0] not in human.body_parts.keys() or pair[1] not in human.body_parts.keys():
+                    continue
+
+                # npimg = cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+                cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+
+        return npimg
 
     def _get_scaled_img(self, npimg, scale):
         get_base_scale = lambda s, w, h: max(self.target_size[0] / float(h), self.target_size[1] / float(w)) * s
