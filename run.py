@@ -31,6 +31,8 @@ if __name__ == '__main__':
                         help='if provided, resize heatmaps before they are post-processed. default=1.0')
     parser.add_argument('--mode', type=str, default="all",
                         help='all or triangle')
+    parser.add_argument('--background', type=bool, default=True,
+                        help='True of False')
 
     args = parser.parse_args()
 
@@ -64,6 +66,8 @@ if __name__ == '__main__':
         if frame_count % 10 == 0 :
             print("frame_count:\t" + str(frame_count))
             print('inference frame: %s in %.4f seconds.' % (frame_count, elapsed))
+        if not args.background :
+            image = np.zeros((int(cap.get(3)), int(cap.get(4)), 3), np.uint8) + 255
         if args.mode == "all" :
             image = TfPoseEstimator.draw_humans(image, humans, imgcopy=False)
         if args.mode == "triangle":

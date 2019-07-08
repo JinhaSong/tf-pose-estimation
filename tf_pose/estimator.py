@@ -394,23 +394,40 @@ class TfPoseEstimator:
         image_h, image_w = npimg.shape[:2]
         centers = {}
         for human in humans:
-            # draw point
-            for i in range(common.CocoPart.Background.value):
-                if i not in human.body_parts.keys():
-                    continue
+            min_x = 1000000
+            min_y = 1000000
+            max_x = 0
+            max_y = 0
 
-                body_part = human.body_parts[i]
-                center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
-                centers[i] = center
-                cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
+            for i in human.body_parts:
+                body_part_x = human.body_parts[i].x * image_w + 0.5
+                body_part_y = human.body_parts[i].y * image_h + 0.5
+                if max_x < body_part_x: max_x = body_part_x
+                if max_y < body_part_y: max_y = body_part_y
+                if min_x > body_part_x: min_x = body_part_x
+                if min_y > body_part_y: min_y = body_part_y
 
-            # draw line
-            for pair_order, pair in enumerate(common.CocoPairsRender):
-                if pair[0] not in human.body_parts.keys() or pair[1] not in human.body_parts.keys():
-                    continue
+            image_size = image_w * image_h
+            human_size = (max_x - min_x) * (max_y - min_y)
+            ratio = human_size / image_size
+            if ratio > 0.05:
+                # draw point
+                for i in range(common.CocoPart.Background.value):
+                    if i not in human.body_parts.keys():
+                        continue
 
-                # npimg = cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
-                cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+                    body_part = human.body_parts[i]
+                    center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
+                    centers[i] = center
+                    cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
+
+                # draw line
+                for pair_order, pair in enumerate(common.CocoPairsRender):
+                    if pair[0] not in human.body_parts.keys() or pair[1] not in human.body_parts.keys():
+                        continue
+
+                    # npimg = cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+                    cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
 
         return npimg
     @staticmethod
@@ -422,26 +439,58 @@ class TfPoseEstimator:
         for human in humans:
             # draw point
             # for i in range(common.CocoPart.Background.value):
-            edge = [2,4,5,7]
-            for i in edge:
-                if i not in human.body_parts.keys():
-                    continue
+            min_x = 1000000
+            min_y = 1000000
+            max_x = 0
+            max_y = 0
 
-                body_part = human.body_parts[i]
-                center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
-                centers[i] = center
-                cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
+            for i in human.body_parts :
+                body_part_x = human.body_parts[i].x * image_w + 0.5
+                body_part_y = human.body_parts[i].y * image_h + 0.5
+                if max_x < body_part_x : max_x = body_part_x
+                if max_y < body_part_y : max_y = body_part_y
+                if min_x > body_part_x : min_x = body_part_x
+                if min_y > body_part_y : min_y = body_part_y
 
+            image_size = image_w * image_h
+            human_size = (max_x - min_x) * (max_y - min_y)
+            ratio = human_size / image_size
+            if ratio > 0.07 :
+                edge = [2,4,5,7]
+                if not 4 in human.body_parts and 7 in human.body_parts :
+                    human.body_parts[4] = human.body_parts[7]
+                elif not 7 in human.body_parts and 4 in human.body_parts :
+                    human.body_parts[7] = human.body_parts[4]
+                elif 4 and 7 in human.body_parts :
+                    human.body_parts[7].x = human.body_parts[4].x = (human.body_parts[4].x + human.body_parts[7].x) / 2
+                    human.body_parts[7].y = human.body_parts[4].y = (human.body_parts[4].y + human.body_parts[7].y) / 2
+                else :
+                    pass
+                if 2 and 4 and 5 and 7 in human.body_parts :
+                    for i in edge:
+                        if i not in human.body_parts.keys():
+                            continue
 
-            # draw line
-            pair_circle = [(2, 4), (2, 5), (5, 7)]
-            for pair_order, pair in enumerate(pair_circle):
-                if pair[0] not in human.body_parts.keys() or pair[1] not in human.body_parts.keys():
-                    continue
+                        body_part = human.body_parts[i]
+                        center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
+                        centers[i] = center
+                        cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
 
-                # npimg = cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
-                cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+                    # draw line
+                    pair_circle = [(2, 4), (2, 5), (5, 7)]
+                    for pair_order, pair in enumerate(pair_circle):
+                        if pair[0] not in human.body_parts.keys() or pair[1] not in human.body_parts.keys():
+                            continue
+                        # npimg = cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
+                        cv2.line(npimg, centers[pair[0]], centers[pair[1]], common.CocoColors[pair_order], 3)
 
+                    # draw triangle
+                if 2 in human.body_parts and 4 in human.body_parts and 5 in human.body_parts :
+                    p1 = [int(human.body_parts[4].x * image_w + 0.5), int(human.body_parts[4].y * image_h + 0.5)]
+                    p2 = [int(human.body_parts[2].x * image_w + 0.5), int(human.body_parts[2].y * image_h + 0.5)]
+                    p3 = [int(human.body_parts[5].x * image_w + 0.5), int(human.body_parts[5].y * image_h + 0.5)]
+                    trg_cnt = np.array([[p1, p2, p3]])
+                    cv2.fillPoly(npimg, trg_cnt,(0,255,0))
         return npimg
 
     def _get_scaled_img(self, npimg, scale):
