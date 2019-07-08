@@ -47,10 +47,13 @@ if __name__ == '__main__':
     video_file = args.video
     cap = cv2.VideoCapture(video_file)
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    output_filename = str(video_file)
     if args.mode == "all":
-        output_filename = str(video_file).replace(".", "_all.")
+        output_filename = str(output_filename).replace(".", "_all.")
     elif args.mode == "triangle":
-        output_filename = str(video_file).replace(".", "_triangle.")
+        output_filename = str(output_filename).replace(".", "_triangle.")
+    elif args.background :
+        output_filename = str(output_filename).replace(".", "_only_skel.")
     print(output_filename)
     out = cv2.VideoWriter(output_filename, fourcc, 30.0, (int(cap.get(3)), int(cap.get(4))))
 
@@ -66,8 +69,8 @@ if __name__ == '__main__':
         if frame_count % 10 == 0 :
             print("frame_count:\t" + str(frame_count))
             print('inference frame: %s in %.4f seconds.' % (frame_count, elapsed))
-        if not args.background :
-            image = np.zeros((int(cap.get(3)), int(cap.get(4)), 3), np.uint8) + 255
+        if args.background :
+            image = np.zeros(image.shape, np.uint8) + 255
         if args.mode == "all" :
             image = TfPoseEstimator.draw_humans(image, humans, imgcopy=False)
         if args.mode == "triangle":
@@ -76,41 +79,3 @@ if __name__ == '__main__':
     cap.release()
     out.release()
     cv2.destroyAllWindows()
-    # try:
-    #     import matplotlib.pyplot as plt
-    #
-    #     fig = plt.figure()
-    #     a = fig.add_subplot(2, 2, 1)
-    #     a.set_title('Result')
-    #     plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    #
-    #     bgimg = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2RGB)
-    #     bgimg = cv2.resize(bgimg, (e.heatMat.shape[1], e.heatMat.shape[0]), interpolation=cv2.INTER_AREA)
-    #
-    #     # show network output
-    #     a = fig.add_subplot(2, 2, 2)
-    #     plt.imshow(bgimg, alpha=0.5)
-    #     tmp = np.amax(e.heatMat[:, :, :-1], axis=2)
-    #     plt.imshow(tmp, cmap=plt.cm.gray, alpha=0.5)
-    #     plt.colorbar()
-    #
-    #     tmp2 = e.pafMat.transpose((2, 0, 1))
-    #     tmp2_odd = np.amax(np.absolute(tmp2[::2, :, :]), axis=0)
-    #     tmp2_even = np.amax(np.absolute(tmp2[1::2, :, :]), axis=0)
-    #
-    #     a = fig.add_subplot(2, 2, 3)
-    #     a.set_title('Vectormap-x')
-    #     # plt.imshow(CocoPose.get_bgimg(inp, target_size=(vectmap.shape[1], vectmap.shape[0])), alpha=0.5)
-    #     plt.imshow(tmp2_odd, cmap=plt.cm.gray, alpha=0.5)
-    #     plt.colorbar()
-    #
-    #     a = fig.add_subplot(2, 2, 4)
-    #     a.set_title('Vectormap-y')
-    #     # plt.imshow(CocoPose.get_bgimg(inp, target_size=(vectmap.shape[1], vectmap.shape[0])), alpha=0.5)
-    #     plt.imshow(tmp2_even, cmap=plt.cm.gray, alpha=0.5)
-    #     plt.colorbar()
-    #     plt.show()
-    # except Exception as e:
-    #     logger.warning('matplitlib error, %s' % e)
-    #     cv2.imshow('result', image)
-    #     cv2.waitKey()
